@@ -18,8 +18,8 @@
 /**
 */
 
-class SpectrogramComponent   : public Component,
-                               private Timer
+/*class SpectrogramComponent   : public Component,
+                                   private Timer
 {
 public:
     SpectrogramComponent()
@@ -133,8 +133,9 @@ private:
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SpectrogramComponent)
 };
-
-class Spectrumplugin2AudioProcessorEditor  : public AudioProcessorEditor
+*/
+class Spectrumplugin2AudioProcessorEditor  : public AudioProcessorEditor,
+                                             private Timer
                                 
 {                                   
 public:
@@ -144,14 +145,33 @@ public:
     //==============================================================================
     void paint (Graphics&) override;
     void resized() override;
-    SpectrogramComponent m_SpectroGramComp;
+    //SpectrogramComponent m_SpectroGramComp;
+    void processAudioBlock(const AudioBuffer<float>& buffer);
+    void timerCallback() override;
+    void pushNextSampleIntoFifo (float sample) noexcept;
+    void drawNextLineOfSpectrogram();
+    
+        enum
+    {
+        fftOrder = 10,
+        fftSize  = 1 << fftOrder
+    };
+    
+    
+    dsp::FFT forwardFFT;
+    Image spectrogramImage;
+
+    float fifo [fftSize];
+    float fftData [2 * fftSize];
+    int fifoIndex = 0;
+    bool nextFFTBlockReady = false;
 
 private:
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
     Spectrumplugin2AudioProcessor& processor;
 
-    
+   
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Spectrumplugin2AudioProcessorEditor)
 };
