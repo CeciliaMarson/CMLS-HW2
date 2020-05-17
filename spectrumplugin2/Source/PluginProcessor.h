@@ -16,6 +16,9 @@
 #define M_PI  (3.14159265)
 #endif
 
+
+#include <string.h>
+#include <stdlib.h>
 #include "math.h"
 //==============================================================================
 /**
@@ -37,6 +40,7 @@ public:
    #ifndef JucePlugin_PreferredChannelConfigurations
     bool isBusesLayoutSupported (const BusesLayout& layouts) const override;
    #endif
+   
     void timerCallback();
     void NextSampleIntoFifo (float sample) noexcept;
     void NextLineOfSpectrogram();
@@ -88,8 +92,13 @@ public:
    double* X;
    int f0AreaSize, numberOfHarmonics;
    float* Cost;
+   
+   char* sign;
+   void approximateNum(float midinumber, char* sign1);
+   float num;
+   int midinum;
 
-   String pitchText;
+   //String pitchText;
     
 
     

@@ -26,7 +26,7 @@ Spectrumplugin2AudioProcessor::Spectrumplugin2AudioProcessor()
 #endif
 ,forwardFFT1(fftOrder)
 {
-  
+  sign=(char*)malloc(sizeof(char*));
 
 }
 
@@ -144,6 +144,7 @@ void Spectrumplugin2AudioProcessor::timerCallback()
 {
         if (nextFFTBlockReady)
         {
+            
             NextLineOfSpectrogram();
             nextFFTBlockReady = false; 
               for (int i = 0; i < fftSize; i++) {
@@ -151,13 +152,36 @@ void Spectrumplugin2AudioProcessor::timerCallback()
                 }
             generateCost(X, f0Area, numberOfHarmonics, fftSize, f0AreaSize, SAMPLE_RATE);
             pitchEstimate = estimatePitch(f0Area, f0AreaSize);
+            num = log(pitchEstimate / 440.0) / log(2) * 12 + 69;
+            approximateNum(num,sign);
+            if (sign[0]=='-'){
+                midinum=int(num)+1;
+            }
+            midinum=int(num)+1;
+            
+            auto message = MidiMessage::getMidiNoteName(midinum,true,true,60);
     
-            pitchText = String (pitchEstimate, 1);
+            //pitchText = message+sign;
               
                 
         }
     }
 
+void Spectrumplugin2AudioProcessor::approximateNum(float midinumber, char* sign1)
+{
+
+  
+    if (midinumber-int(midinumber)>=0.5){
+        strcpy(sign1,"-");
+       
+    }
+    if(midinumber-int(midinumber)==0.0){
+        strcpy(sign1,"=");
+       
+    }
+    strcpy(sign1,"+");
+
+}
 
 
 void Spectrumplugin2AudioProcessor::NextSampleIntoFifo (float sample) noexcept
@@ -268,7 +292,7 @@ void Spectrumplugin2AudioProcessor::processBlock (AudioSampleBuffer& buffer, Mid
 	auto myeditor = dynamic_cast<Spectrumplugin2AudioProcessorEditor*>(getActiveEditor());
 	if (myeditor != nullptr)
 	{
-		myeditor->m_SpectroGramComp.processAudioBlock(buffer);
+		myeditor->processAudioBlock(buffer);
 	}
    
     // This is the place where you'd normally do the guts of your plugin's
