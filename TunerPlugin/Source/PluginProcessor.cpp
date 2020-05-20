@@ -292,19 +292,26 @@ void TUNERAudioProcessor::processBlock(AudioSampleBuffer& buffer, MidiBuffer& mi
        
     if (num - int(num) >= 0.5f) 
         {
-            midinum = int(num) + 1;
-            sign="up"; //the player has to get the note higher if he wants to reach the note write in the GUI
+            if(num-int(num) >= 0.9f){
+            sign="up";
+            }
+            else{
+                sign="OK";//the note is very similar to the one precise
+                }
+            midinum = int(num) + 1;//the player has to get the note higher if he wants to reach the note write in the GUI
     }
-    else if (num-int(num)==0.0f)
-        {
-            midinum=int(num);
-            sign="OK"; //the note is precise (impossible)
-    }
+    
     else 
         {
-            midinum = int(num);
-            sign="down";//the player has to get the note lower if he wants to reach the note write in the GUI
+            if(num-int(num)>=0.1f)
+            {
+                sign="down";//the player has to get the note lower if he wants to reach the note write in the GUI
+            }
             
+            else{
+                sign="OK";//the note is very similar to the one precise
+                };
+        midinum=int(num);
     }
     
     //get a midi output with the midi number find before
