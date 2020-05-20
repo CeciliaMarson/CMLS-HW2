@@ -25,12 +25,15 @@ public:
     //==============================================================================
     void paint(Graphics&) override;
     void resized() override;
-    //SpectrogramComponent m_SpectroGramComp;
+
+    
+    //This function are useful to process the fft and its spectrum
     void processAudioBlock(const AudioBuffer<float>& buffer);
     void timerCallback() override;
     void pushNextSampleIntoFifo(float sample) noexcept;
     void drawNextLineOfSpectrogram();
     
+    //This are the variables related to the fft
     enum
     {
         fftOrder = 10,
@@ -46,16 +49,15 @@ public:
     int fifoIndex = 0;
     bool nextFFTBlockReady = false;
     
-    String pitch;
+   
     
     
     
 private:
-    TUNERAudioProcessor& processor;
-    // This reference is provided as a quick way for your editor to
-    // access the processor object that created it.
-    //Spectrumplugin2AudioProcessor& processor;
-
+    TUNERAudioProcessor& processor; 
+    
+    //Inizialisation of the GUI element: the slider and a label that shows the pitch
+    //and the relative function that change the number of harmonics.
     Slider harmonics;
     Label labelHarmonics, labelPitch;
 

@@ -37,6 +37,8 @@ public:
 #ifndef JucePlugin_PreferredChannelConfigurations
     bool isBusesLayoutSupported(const BusesLayout& layouts) const override;
 #endif
+    
+   //The same of the editor
 
     void timerCallback();
     void NextSampleIntoFifo(float sample) noexcept;
@@ -70,7 +72,7 @@ public:
 
     // =============================================================================
     // List of controls parameters
-
+    //the same of the editor, we will calculate the fft in the same way as the editor
     dsp::FFT forwardFFT1;
     static constexpr auto fftOrder = 10;            // [1]
     static constexpr auto fftSize = 1 << fftOrder; // [2]
@@ -78,7 +80,8 @@ public:
     float* fftData;
 
     bool nextFFTBlockReady = false;
-
+    
+    //this function and variable are useful to estimate the pitch value
 
     void generateCost(float* X, float* f0Area, int L, int bufsize, int f0AreaSize, int fs, float* Cost);
 
@@ -91,8 +94,6 @@ public:
     float* Cost;
 
     String sign;
-    
-   
     
     float num;
     int midinum;

@@ -103,15 +103,15 @@ void TUNERAudioProcessor::changeProgramName(int index, const String& newName)
 void TUNERAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
 
-    //numberOfHarmonics = 5;
+    //Inizialitaion of variables and array useful for the computation
     gain = 1.0f;
     fftData=(float*)malloc(sizeof(float)*fftSize*2);
     pitchEstimate=80.0f;
     
     X = (float*)malloc(sizeof(float) * fftSize);
     f0Res = 0.05f;
-    f0Max = 670.0f;
-    f0Min = 80.0f;
+    f0Max = 670.0f; //The max frequency useful
+    f0Min = 80.0f;  //The min frequency useful
     
     f0AreaSize = round((f0Max - f0Min) / f0Res + 1);
     f0Area = (float*)malloc(f0AreaSize * sizeof(float));
@@ -120,7 +120,7 @@ void TUNERAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
        
     for (int i = 1; i < f0AreaSize; i++) {
         f0Area[i] = f0Area[i - 1] + f0Res;
-    }
+    }//The f0area is filled with all the usefull frequency in order to compute a note
     for (int i=0;i<f0AreaSize;i++){
        Cost[i]=0;
     }
@@ -141,6 +141,7 @@ void TUNERAudioProcessor::releaseResources()
 
 //==============================================================================
 
+//As in the editor this function is calling in every cicle 
 void TUNERAudioProcessor::timerCallback()
 {
     if (nextFFTBlockReady)
@@ -148,11 +149,13 @@ void TUNERAudioProcessor::timerCallback()
 
         NextLineOfSpectrogram();
         
+        //save the data from the fft
         for (int i = 0; i < fftSize; i++) {
             
             X[i] = fftData[i];
         }
         
+        //compute the pitch estimation
         generateCost(X, f0Area, numberOfHarmonics, fftSize, f0AreaSize, SAMPLE_RATE, Cost);
         
         pitchEstimate = estimatePitch(f0Area, f0AreaSize);
@@ -163,7 +166,7 @@ void TUNERAudioProcessor::timerCallback()
     }
 }
 
-
+//as in the editor this functions save the data from the buffer
 
 void TUNERAudioProcessor::NextSampleIntoFifo(float sample) noexcept
 {
@@ -185,10 +188,12 @@ void TUNERAudioProcessor::NextSampleIntoFifo(float sample) noexcept
     fifo[fifoIndex++] = sample;
 }
 
+//fft computation
 void TUNERAudioProcessor::NextLineOfSpectrogram()
 {
     forwardFFT1.performFrequencyOnlyForwardTransform(fftData);
 }
+
 
 void TUNERAudioProcessor::generateCost(float* X, float* f0Area, int L, int bufsize, int f0AreaSize, int fs, float* Cost) {
     int fIndex;     // One sample of F0Area
@@ -196,12 +201,12 @@ void TUNERAudioProcessor::generateCost(float* X, float* f0Area, int L, int bufsi
     for (int n = 0; n < f0AreaSize; n++)
     {
         fIndex = (int)floor(f0Area[n] * (1.f * bufsize / fs) + 1);
-        Cost[n] = X[fIndex];
+        Cost[n] = X[fIndex]; //from the fft we compress the data in a array that consider only the useful frequency
 
-        for (int l = 2; l <= L; l++)
+        for (int l = 2; l <= L; l++) 
         {
             fIndex = (int)floor(f0Area[n] * l * (1.f * bufsize / fs) + 1);
-            Cost[n] += X[fIndex];
+            Cost[n] += X[fIndex]; //for each frequency we add its harmonics 
         }
     }
 }
@@ -213,12 +218,12 @@ float TUNERAudioProcessor::estimatePitch(float* f0Area, int f0AreaSize) {
 
     for (int i = 0; i < f0AreaSize; i++)
     {
-        if (maxVal < Cost[i]) {
+        if (maxVal < Cost[i]) { //from the array allocated before we choose the higher value 
             maxVal = Cost[i];
             argument = i;
         }
     }
-    pitchEstimate = f0Area[argument];
+    pitchEstimate = f0Area[argument];//and estimate the corrispondet frequency from the ones we have found before
 
     return pitchEstimate;
 }
@@ -256,7 +261,7 @@ void TUNERAudioProcessor::processBlock(AudioSampleBuffer& buffer, MidiBuffer& mi
 
     if (buffer.getNumChannels() > 0)
     {
-
+    //takes the data from the buffer 
         const float* channelData = buffer.getReadPointer(0);
         for (int i = 0; i < buffer.getNumSamples(); ++i) {
             NextSampleIntoFifo(channelData[i]);
@@ -272,6 +277,7 @@ void TUNERAudioProcessor::processBlock(AudioSampleBuffer& buffer, MidiBuffer& mi
     // this code if your algorithm always overwrites all the output channels.
     for (int i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear(i, 0, buffer.getNumSamples());
+    //give the data from the buffer to the editor
     auto myeditor = dynamic_cast<TUNERAudioProcessorEditor*>(getActiveEditor());
     if (myeditor != nullptr)
     {
@@ -279,27 +285,29 @@ void TUNERAudioProcessor::processBlock(AudioSampleBuffer& buffer, MidiBuffer& mi
     }
     
     
-   
+   //compute a float number near the midi note estimation
     num = log(pitchEstimate / 440.0) / log(2) * 12 + 69;
         
-   
+   //compute the actual midi number and a suggestion for the player
        
     if (num - int(num) >= 0.5f) 
         {
             midinum = int(num) + 1;
-            sign="up";
+            sign="up"; //the player has to get the note higher if he wants to reach the note write in the GUI
     }
     else if (num-int(num)==0.0f)
         {
             midinum=int(num);
-            sign="OK";
+            sign="OK"; //the note is precise (impossible)
     }
     else 
         {
             midinum = int(num);
-            sign="down";
+            sign="down";//the player has to get the note lower if he wants to reach the note write in the GUI
             
     }
+    
+    //get a midi output with the midi number find before
        
     auto message = MidiMessage::getMidiNoteName(midinum, true, false, 60);
 

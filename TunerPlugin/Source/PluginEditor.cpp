@@ -15,20 +15,20 @@ TUNERAudioProcessorEditor::TUNERAudioProcessorEditor(TUNERAudioProcessor& p)
     spectrogramImage(Image::RGB, 400, 300, true), fifoIndex(0), nextFFTBlockReady(false)
 
 {
-    //addAndMakeVisible(&m_SpectroGramComp);
-    // Make sure that before the constructor has finished, you've set the
-    // editor's size to whatever you need it to be.
+    
     setSize(500, 400);
+    
+    //Inizialisation of the GUI component
 
     labelHarmonics.setText("Harmonics", dontSendNotification);
     
-    
-
     harmonics.setRange(1, 15, 1);
     harmonics.setValue(5);
     harmonics.setSliderStyle(Slider::Rotary);
     harmonics.setTextBoxStyle(Slider::TextBoxBelow, false, 50, 20);
     harmonics.addListener(this);
+    
+    //labelPitch takes its text from the processor
     labelPitch.setText((processor.pitchText + " " + processor.sign), sendNotification);
     
     addAndMakeVisible(harmonics);
@@ -63,19 +63,17 @@ void TUNERAudioProcessorEditor::paint(Graphics& g)
     g.fillAll();// Colours::black);
 
     g.setOpacity(1.0f);
+    //This is the function that actually draw the spectrum
     g.drawImage(spectrogramImage, getLocalBounds().toFloat());
 
     g.setColour(Colours::white);
     g.setFont(20.0f);
-    //g.drawFittedText(processor.pitchText, juce::Rectangle<int>(500, 650), Justification::centred, 1);
+    
 }
 
 void TUNERAudioProcessorEditor::resized()
 {
-    //m_SpectroGramComp.setBounds(0, 0, getWidth(), getHeight());
-
-    // This is generally where you'll want to lay out the positions of any
-    // subcomponents in your editor..
+    //resized all the GUI elements
     labelHarmonics.setBounds(30, 280, 130, 20);
     harmonics.setBounds(20, 290, 100, 100);
 
@@ -83,18 +81,21 @@ void TUNERAudioProcessorEditor::resized()
 
 }
 
+//This function is important in order to recalling all the function, without it all the code will do only one call. 
 void TUNERAudioProcessorEditor::timerCallback()
 {
     if (nextFFTBlockReady)
+        
     {
-        drawNextLineOfSpectrogram();
+        drawNextLineOfSpectrogram(); //here is when the fft is actually called
         
         nextFFTBlockReady = false;
-        repaint();
+        repaint(); //this function call the function paint again in order to draw other lines of the spectrum
     }
     labelPitch.setText((processor.pitchText + " " + processor.sign), sendNotification);
 }
 
+//This function save the data from the buffer in order to compute the fft
 void TUNERAudioProcessorEditor::pushNextSampleIntoFifo(float sample) noexcept
 {
     // if the fifo contains enough data, set a flag to say
@@ -114,6 +115,7 @@ void TUNERAudioProcessorEditor::pushNextSampleIntoFifo(float sample) noexcept
     fifo[fifoIndex++] = sample;
 }
 
+//this function actually compute the fft and set all the data usefull to draw the spectrum
 void TUNERAudioProcessorEditor::drawNextLineOfSpectrogram()
 {
     auto rightHandEdge = spectrogramImage.getWidth() - 1;
@@ -139,6 +141,7 @@ void TUNERAudioProcessorEditor::drawNextLineOfSpectrogram()
     }
 }
 
+//this function change the number of harmonics in the processor
 void TUNERAudioProcessorEditor::sliderValueChanged(Slider* slider)
 {
     processor.numberOfHarmonics = harmonics.getValue();
